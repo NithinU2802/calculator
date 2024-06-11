@@ -103,17 +103,6 @@ const App = () => {
     });
   };
 
-  const percentClickHandler = () => {
-    let num = calc.num ? parseFloat(removeSpaces(calc.num)) : 0;
-    let res = calc.res ? parseFloat(removeSpaces(calc.res)) : 0;
-    setCalc({
-      ...calc,
-      num: (num * 10 ** 16 / 10 ** 18),
-      res: (res * 10 ** 16 / 10 ** 18),
-      sign: "",
-    });
-  };
-
   const resetClickHandler = () => {
     setCalc({
       ...calc,
@@ -128,11 +117,9 @@ const App = () => {
       ? resetClickHandler()
       : btn === "+-"
         ? invertClickHandler()
-        : btn === "%"
-          ? percentClickHandler()
           : btn === "="
             ? equalsClickHandler()
-            : btn === "/" || btn === "X" || btn === "-" || btn === "+"
+            : btn==="%" || btn === "/" || btn === "X" || btn === "-" || btn === "+"
               ? signClickHandler(e)
               : btn === "."
                 ? comaClickHandler(e)
