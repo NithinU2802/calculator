@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import Wrapper from "./components/Wrapper";
 import Screen from "./components/Screen";
 import ButtonBox from "./components/ButtonBox";
@@ -14,20 +13,21 @@ const btnValues = [
 ];
 
 const toLocaleString = (num) =>
-  String(num).replace(/(?<!\..*)(\d)(?=(?:\d{3})+(?:\.|$))/g, "$1 ");
+    String(num).replace(/(?<!\..*)(\d)(?=(?:\d{3})+(?:\.|$))/g, "$1 ");
 
 const removeSpaces = (num) => num.toString().replace(/\s/g, "");
 
 const math = (a, b, sign) =>
-  sign === "+" ? a + b : sign === "-" ? a - b : sign === "X" ? a * b : a / b;
+    sign === "+" ? a + b : sign === "-" ? a - b : sign === "X" ? a * b : a / b;
 
-const zeroDivisionError = "Can't divide with 0";
+const zeroDivisionError = "Can't divide by 0";
 
 const App = () => {
-  let [calc, setCalc] = useState({
+  const [calc, setCalc] = useState({
     sign: "",
     num: 0,
     res: 0,
+    history: []
   });
 
   const numClickHandler = (e) => {
@@ -37,9 +37,9 @@ const App = () => {
       setCalc({
         ...calc,
         num:
-          removeSpaces(calc.num) % 1 === 0 && !calc.num.toString().includes(".")
-            ? toLocaleString(Number(removeSpaces(calc.num + value)))
-            : toLocaleString(calc.num + value),
+            removeSpaces(calc.num) % 1 === 0 && !calc.num.toString().includes(".")
+                ? toLocaleString(Number(removeSpaces(calc.num + value)))
+                : toLocaleString(calc.num + value),
         res: !calc.sign ? 0 : calc.res,
       });
     }
@@ -60,37 +60,43 @@ const App = () => {
       ...calc,
       sign: e.target.innerHTML,
       res: !calc.num
-        ? calc.res
-        : !calc.res
-          ? calc.num
-          : toLocaleString(
-            math(
-              Number(removeSpaces(calc.res)),
-              Number(removeSpaces(calc.num)),
-              calc.sign
-            )
-          ),
+          ? calc.res
+          : !calc.res
+              ? calc.num
+              : toLocaleString(
+                  math(
+                      Number(removeSpaces(calc.res)),
+                      Number(removeSpaces(calc.num)),
+                      calc.sign
+                  )
+              ),
       num: 0,
     });
   };
 
   const equalsClickHandler = () => {
     if (calc.sign && calc.num) {
-      setCalc({
-        ...calc,
-        res:
-          calc.num === "0" && calc.sign === "/"
-            ? zeroDivisionError
-            : toLocaleString(
-              math(
-                Number(removeSpaces(calc.res)),
-                Number(removeSpaces(calc.num)),
-                calc.sign
-              )
-            ),
-        sign: "",
-        num: 0,
-      });
+      if (calc.num === "0" && calc.sign === "/") {
+        setCalc({
+          ...calc,
+          res: zeroDivisionError,
+          sign: "",
+          num: 0,
+        });
+      } else {
+        const result = math(
+            Number(removeSpaces(calc.res)),
+            Number(removeSpaces(calc.num)),
+            calc.sign
+        );
+        setCalc({
+          ...calc,
+          res: toLocaleString(result),
+          sign: "",
+          num: 0,
+          history: [...calc.history, `${calc.res} ${calc.sign} ${calc.num} = ${toLocaleString(result)}`]
+        });
+      }
     }
   };
 
@@ -113,35 +119,59 @@ const App = () => {
   };
 
   const buttonClickHandler = (e, btn) => {
-    btn === "C" || calc.res === zeroDivisionError
-      ? resetClickHandler()
-      : btn === "+-"
-        ? invertClickHandler()
-          : btn === "="
-            ? equalsClickHandler()
-            : btn==="%" || btn === "/" || btn === "X" || btn === "-" || btn === "+"
-              ? signClickHandler(e)
-              : btn === "."
-                ? comaClickHandler(e)
-                : numClickHandler(e)
-  }
+    switch (btn) {
+      case "C":
+      case zeroDivisionError:
+        resetClickHandler();
+        break;
+      case "+-":
+        invertClickHandler();
+        break;
+      case "=":
+        equalsClickHandler();
+        break;
+      case "%":
+      case "/":
+      case "X":
+      case "-":
+      case "+":
+        signClickHandler(e);
+        break;
+      case ".":
+        comaClickHandler(e);
+        break;
+      default:
+        numClickHandler(e);
+        break;
+    }
+  };
 
   return (
-    <Wrapper>
-      <Screen value={calc.num ? calc.num : calc.res} />
-      <ButtonBox>
-        {btnValues.flat().map((btn, i) => {
-          return (
-            <Button
-              key={i}
-              className={btn === "=" ? "equals" : ""}
-              value={btn}
-              onClick={(e) => buttonClickHandler(e, btn)}
-            />
-          );
-        })}
-      </ButtonBox>
-    </Wrapper>
+      <Wrapper>
+        <Screen value={calc.num ? calc.num : calc.res}/>
+        <ButtonBox>
+          {btnValues.flat().map((btn, i) => {
+            return (
+                <Button
+                    key={i}
+                    className={btn === "=" ? "equals" : ""}
+                    value={btn}
+                    onClick={(e) => buttonClickHandler(e, btn)}
+                />
+            );
+          })}
+        </ButtonBox>
+        <div className="history">
+          <h2>History</h2>
+          <ul>
+            {calc.history.map((entry, index) => (
+                <li key={index} className={entry.isError ? "error" : "success"}>
+                  {entry.expression} = {entry.result}
+                </li>
+            ))}
+          </ul>
+        </div>
+      </Wrapper>
   );
 };
 
